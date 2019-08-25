@@ -1,0 +1,166 @@
+#include <iostream>
+#include <algorithm>
+#include <cassert>
+using namespace std;
+const int MAXN = 100; // set this according to question constraint
+const int MAXM = 100; // set this according to question constraint
+int a[MAXN][MAXM]; // grid
+bool vis[MAXN][MAXN];
+int dx[] = { 1,0,0,-1 };
+int dy[] = { 0,-1,1,0 };
+struct Point {
+	int x, y;
+	Point() {
+		x = y = 0;
+	}
+	Point(int a, int b) {
+		x = a;
+		y = b;
+	}
+};
+int dir(Point a, Point b) {
+	// returns direction from a to b
+	// 0 is left, 1 is right, 2 is Up , 3 is down
+	// -1 failed to get direction from a to b
+	if (a.x == b.x && a.y == b.y) return -1;
+	if (a.x == b.x) { // in the same row so we must have moved either left or right
+		return (a.y < b.y) ? 1 : 0;
+	}
+	if (a.y == b.y) { // in the same column so we must have moved either up or down
+		return (a.x > b.x) ? 2 : 3;
+	}
+	return -1;
+}
+// true if dp[number][0] opens left, false otherwise, same for other directions
+bool dp[8][4] = {
+	
+	{0,0,0,0},{1,1,1,1},{0,0,1,1},{1,1,0,0},{0,1,1,0},{0,1,0,1},{1,0,0,1},{1,0,1,0}
+};
+bool ok(Point a, int numa,Point b, int numb) {
+	// point a nd point b are adjacent
+	// returns true if we can go from point a to point b having numbers numa & numb respectively
+	if (dp[numa][dir(a, b)] && dp[numb][dir(b, a)]) {
+		return true;
+	}
+	return false;
+}
+// Queue implementation using array
+struct Queue {
+	Point* point;
+	int* len;
+	int qsize;
+	int mxsize;
+	int front;
+	int rear;
+	Queue(int sz) {
+		point = new Point[sz];
+		len = new int[sz];
+		front = 0;
+		mxsize = sz;
+		rear = mxsize-1;
+		qsize = 0;
+		
+	}
+};
+bool full(Queue* q) {
+	return q->qsize == q->mxsize;
+}
+bool empty(Queue* q) {
+	return q->qsize == 0;
+}
+void enqueue(Queue* Q, int x, int y, int len) {
+	if (full(Q)) {
+		assert(false && "Queue is full & push operation is requested\n");
+	}
+	else {
+		Q->rear = (Q->rear + 1) % Q->mxsize;
+		Point np(x, y);
+		Q->point[Q->rear] = np;
+		Q->len[Q->rear] = len;
+		Q->qsize += 1;
+	}
+}
+void Front(Queue* Q, int& x, int& y, int& len) {
+	if (empty(Q)) {
+		assert(false && "Queue is empty & front is requested\n");
+	}
+	x = Q->point[Q->front].x;
+	y = Q->point[Q->front].y;
+	len = Q->len[Q->front];
+}
+void dequeue(Queue* Q) {
+	if (empty(Q)) {
+		assert(false && "Queue is empty & a dequeue opertation is requested\n");
+	}
+	Q->front = (Q->front + 1) % Q->mxsize;
+	Q->qsize -= 1;
+}
+//------------------------------------------------------------------
+int main()
+{
+	int t;
+	cin >> t;
+	while (t--) {
+		int n, m;
+		memset(a, 0, sizeof a);
+		memset(vis, false, sizeof vis);
+		cin >> n >> m;
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < m; j++) {
+				cin >> a[i][j];
+			}
+		}
+		int startx, starty, probeL;
+		cin >> startx >> starty >> probeL;
+		int ans = 0;
+		Queue* q = new Queue(MAXN * MAXN);
+		enqueue(q, startx, starty, probeL);
+		vis[startx][starty] = true;
+		while (!empty(q)) {
+			int currx, curry, currl;
+			Front(q, currx, curry, currl);
+			dequeue(q);
+			if (currl <= 0)continue;
+			if (currl > 0) ans += 1;
+			for (int i = 0; i < 4; i++) {
+				int nextx = currx + dx[i];
+				int nexty = curry + dy[i];
+				if (nextx >= 0 && nexty >= 0 && nextx < n && nexty < m && !vis[nextx][nexty]) {
+					int numb = a[nextx][nexty];
+					int numa = a[currx][curry];
+					Point A(currx, curry);
+					Point B(nextx, nexty);
+					if (ok(A, numa, B, numb)) {
+						vis[nextx][nexty] = true;
+						enqueue(q, nextx, nexty, currl - 1);
+					}
+					
+				}
+			}
+		}
+		cout << ans << endl;
+	}
+	return 0;
+}
+/*
+input:
+
+2
+3 4
+0 0 4 0
+1 3 6 0
+5 0 0 0
+1 2 3
+
+4 4
+5 6 3 5
+2 2 5 7
+2 5 1 3
+4 4 7 3
+2 2 4
+
+output:
+3
+8
+
+*/
