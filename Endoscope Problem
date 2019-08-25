@@ -114,8 +114,10 @@ int main()
 		cin >> startx >> starty >> probeL;
 		int ans = 0;
 		Queue* q = new Queue(MAXN * MAXN);
-		enqueue(q, startx, starty, probeL);
-		vis[startx][starty] = true;
+		if(a[startx][starty]!=0){
+			enqueue(q, startx, starty, probeL);
+			vis[startx][starty] = true;
+		}
 		while (!empty(q)) {
 			int currx, curry, currl;
 			Front(q, currx, curry, currl);
